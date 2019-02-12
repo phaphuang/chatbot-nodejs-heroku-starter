@@ -3,6 +3,8 @@ const middleware = require('@line/bot-sdk').middleware
 const Client = require('@line/bot-sdk').Client
 const app = express()
 
+const http = require('http')
+
 app.get('/', function (req, res) {
 	res.send('chatbot-nodejs-heroku-starter!! Yeh, the text is coming now');
 })
@@ -22,12 +24,72 @@ app.post('/webhook', middleware(config), (req, res) => {
     .all(req.body.events.map(handleEvent))
 })
 
+var lat = "";
+var long = "";
+var url = "";
+var resAqi = "";
+
+function Get(yourUrl){
+  var Httpreq = new XMLHttpRequest(); // a new request
+  Httpreq.open("GET",yourUrl,false);
+  Httpreq.send(null);
+  return Httpreq.responseText;          
+}
+
 function handleEvent(event) {
-  let msg = {
-    type: "text",
-    text: "ทดสอบ"
+  if (event.message.type === "location") {
+    latitude = event.message.latitude
+    longitude = event.message.longitude
+    url = 'http://fathomless-reaches-36581.herokuapp.com/api?lat=' + lat +'&long=' + long
+    http.get(url, function(res){
+      var body = '';
+  
+      res.on('data', function(chunk){
+          body += chunk;
+      });
+  
+      res.on('end', function(){
+          //var fbResponse = JSON.parse(body);
+          //console.log("Got a response: ", fbResponse);
+          resAqi = JSON.parse(body);
+      });
+    }).on('error', function(e){
+          console.log("Got an error: ", e);
+    });
+
+    let msg = {
+      "type": "template",
+      "altText": "this is a carousel template",
+      "template": {
+          "type": "carousel",
+          "columns": [
+          ],
+          "imageAspectRatio": "rectangle",
+          "imageSize": "cover"
+      }
+    }
+
+    let obj = {
+      "thumbnailImageUrl": "",
+      "imageBackgroundColor": "#FFFFFF",
+      "title": "",
+      "text": "description",
+      "defaultAction": {
+          "type": "uri",
+          "label": "View detail",
+          "uri": "http://example.com/page/123"
+      },
+      "actions": [
+          {
+              "type": "uri",
+              "label": "View history",
+              "uri": "http://example.com/page/111"
+          }
+      ]
+    }
+
+    return client.replyMessage(event.replyToken, msg)
   }
-  return client.replyMessage(event.replyToken, msg)
 }
 
 app.set('port', (process.env.PORT || 4000))
