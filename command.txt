@@ -1,0 +1,10 @@
+npx nodemon
+
+# add "dev" in package.json
+npm run dev
+
+
+npx ngrok http 4000
+
+
+$ npm install @line/bot-sdk --save
